@@ -24,22 +24,29 @@
 .DS_Store
 *.pem
 
-# prisma / sqlite
+# prisma / database
 *.db
 *.db-journal
+*.sqlite
+*.sqlite3
 prisma/dev.db*
 
-# uploaded evidence photos (runtime)
+# uploaded files (runtime)
 /public/uploads/
 
-# debug
+# logs & diagnostics
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.next/dev/logs/
 
-# env files (can opt-in for committing if needed)
+# env files — JANGAN commit file .env yang berisi secret sebenarnya
 .env*
+!.env.example
+!.env.sample
+!.env.template
 
 # vercel
 .vercel
@@ -48,4 +55,24 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated prisma client (jika digunakan)
 /src/generated/prisma
+
+# ssh / private keys
+*.key
+*.p12
+*.pfx
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+
+# os
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# project-specific internal docs/config
+AGENTS.md
+CLAUDE.md
+prd_rr_motor.md
