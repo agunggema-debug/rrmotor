@@ -1,0 +1,158 @@
+// RR MOTOR — Prisma schema (SQLite)
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Pengguna (remaja / anak motor)
+model User {
+  id        Int         @id @default(autoincrement())
+  name      String
+  phone     String
+  points    Int         @default(0)
+  createdAt DateTime    @default(now())
+  bookings  Booking[]
+  redemptions Redemption[]
+  accounts  Account[]
+}
+
+// Mekanik (admin / POS)
+model Mechanic {
+  id       Int       @id @default(autoincrement())
+  name     String
+  shift    String
+  bookings Booking[]
+}
+
+// Antrean / booking servis
+model Booking {
+  id               Int       @id @default(autoincrement())
+  queueNumber      String    @unique
+  ownerName        String
+  motor            String
+  plate            String
+  serviceType      String
+  appointmentDate  String
+  appointmentTime  String
+  // Menunggu | Dikerjakan | Test Drive | Selesai
+  status           String    @default("Menunggu")
+  basePrice        Int
+  createdAt        DateTime  @default(now())
+
+  userId     Int?
+  user       User?      @relation(fields: [userId], references: [id])
+  mechanicId Int?
+  mechanic   Mechanic? @relation(fields: [mechanicId], references: [id])
+
+  findings   Finding[]
+}
+
+// Temuan kerusakan tambahan dari mekanik (Digital Billing)
+model Finding {
+  id        Int      @id @default(autoincrement())
+  bookingId Int
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  name      String
+  note      String
+  price     Int
+  photoUrl  String?
+  // pending | approved | rejected
+  status    String   @default("pending")
+}
+
+// Portofolio hasil modifikasi (Modif Corner feed)
+model Portfolio {
+  id    Int    @id @default(autoincrement())
+  title String
+  tag   String
+  grad  String
+}
+
+// Katalog RR Points
+model Reward {
+  id    Int    @id @default(autoincrement())
+  name  String
+  cost  Int
+  icon  String
+  tag   String
+  redemptions Redemption[]
+}
+
+// Riwayat penukaran poin
+model Redemption {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  rewardId  Int
+  reward    Reward   @relation(fields: [rewardId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+// Akun login (admin, mekanik, customer)
+model Account {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  // ADMIN | MECHANIC | KASIR | CUSTOMER
+  role         String
+  userId      Int?
+  user         User?    @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+// Katalog sparepart motor
+model Sparepart {
+  id          Int      @id @default(autoincrement())
+  name        String
+  category    String   // contoh: "Mesin", "Body", "Kaki-kaki", "Kelistrikan", "Aksesoris"
+  price       Int      // harga jual
+  stock       Int      @default(0)
+  description String   @default("")
+  imageUrl    String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transactionItems TransactionItem[]
+}
+
+// Transaksi penjualan sparepart (kasir)
+model Transaction {
+  id            Int      @id @default(autoincrement())
+  invoiceNumber String   @unique
+  customerName  String   @default("")
+  customerPhone String   @default("")
+  total         Int
+  cash          Int      @default(0)
+  change        Int      @default(0)
+  paymentMethod String   @default("cash") // cash | qris | transfer
+  note          String   @default("")
+  createdAt     DateTime @default(now())
+
+  items TransactionItem[]
+}
+
+// Presensi pengunjung anonim (guest) yang sedang online
+model VisitorSession {
+  id        String   @id
+  lastSeen  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([lastSeen])
+}
+
+// Item dalam transaksi sparepart
+model TransactionItem {
+  id           Int         @id @default(autoincrement())
+  transactionId Int
+  transaction  Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  sparepartId  Int
+  sparepart    Sparepart   @relation(fields: [sparepartId], references: [id])
+  quantity     Int
+  priceAtSale  Int         // harga saat transaksi (mengantisipasi perubahan harga)
+}
