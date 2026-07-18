@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
-import type { Booking } from "@prisma/client";
+import type { Prisma, Booking } from "@prisma/client";
 import { IBookingRepository } from "./interfaces";
 
 export class BookingRepository implements IBookingRepository {
