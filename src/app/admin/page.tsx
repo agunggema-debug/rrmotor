@@ -11,8 +11,7 @@ import {
 import { Container, PageHeader, Card } from "@/components/ui";
 import { StatCard, BarChart, DonutChart } from "@/components/admin-charts";
 import type { Booking } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 
 const STATUS_COLORS: Record<string, string> = {
   Menunggu: "#8290a1",

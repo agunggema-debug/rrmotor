@@ -10,7 +10,7 @@ import { getSparepartIcon, getSparepartImage } from "@/lib/sparepart";
 import { stripHtml } from "@/lib/sanitize";
 import Image from "next/image";
 
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 
 export default function SparepartDetailPage({
   params,

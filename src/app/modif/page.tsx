@@ -6,8 +6,7 @@ import { Send, Sparkles, ImageIcon, MessageCircle } from "lucide-react";
 import { Container, PageHeader, Card } from "@/components/ui";
 import { stripHtml } from "@/lib/sanitize";
 import type { Portfolio } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 
 const QUICK = [
   "Rekomendasi knalpot racing?",

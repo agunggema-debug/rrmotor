@@ -11,8 +11,7 @@ import {
 import { Container, PageHeader, Card } from "@/components/ui";
 import { useAuth } from "@/components/auth-provider";
 import { STATUS_ORDER, type Booking } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 
 function getOwnerMessage(user: unknown): string {
   return user

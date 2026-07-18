@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
             "default-src 'self'",
             "img-src 'self' data: blob: https:",
             "font-src 'self' data:",
-            "style-src 'self' 'unsafe-inline'",
+            "style-src 'self' 'unsafe-inline' https://accounts.google.com",
             `script-src 'self' 'unsafe-inline' https://accounts.google.com${
               process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"
             }`,

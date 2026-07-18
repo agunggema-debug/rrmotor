@@ -4,8 +4,7 @@
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import type { Sparepart } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 
 export const CATEGORIES = ["Semua", "Mesin", "Body", "Kaki-kaki", "Kelistrikan", "Aksesoris", "Oli & Cairan"] as const;
 export type Category = typeof CATEGORIES[number];

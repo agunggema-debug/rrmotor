@@ -14,8 +14,7 @@ import {
 import { Container, PageHeader, Card } from "@/components/ui";
 import { useAuth } from "@/components/auth-provider";
 import type { Reward, UserPoints } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 const ICONS: Record<string, LucideIcon> = {
   Droplet,
   Sticker,

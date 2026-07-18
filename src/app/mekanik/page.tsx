@@ -14,8 +14,7 @@ import {
 } from "lucide-react";
 import { Container, PageHeader, Card } from "@/components/ui";
 import { STATUS_ORDER, type Booking, type Mechanic } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 const COMMISSION_PER_MOTOR = 15000;
 
 export default function MekanikPage() {

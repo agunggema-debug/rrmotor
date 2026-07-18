@@ -21,8 +21,7 @@ import {
 } from "lucide-react";
 import { Container, PageHeader, Card } from "@/components/ui";
 import type { Sparepart, Transaction } from "@/lib/types";
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import { fetcher } from "@/lib/fetcher";
 const PAYMENT_METHODS = [
   { value: "cash", label: "Tunai", icon: Banknote },
   { value: "qris", label: "QRIS", icon: Smartphone },

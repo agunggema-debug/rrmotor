@@ -6,6 +6,8 @@ import Link from "next/link";
 import { CalendarClock, MapPin, Check, Bike, Gauge, Sparkles, Wrench, Zap } from "lucide-react";
 import { Container, PageHeader, Card } from "@/components/ui";
 import { useAuth } from "@/components/auth-provider";
+import { fetcher } from "@/lib/fetcher";
+import type { UserPoints } from "@/lib/types";
 
 const SERVICES = [
   { id: "ringan", label: "Servis Ringan", icon: Wrench, est: "~45 menit", price: 75000 },
@@ -49,7 +51,7 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { data: profile } = useSWR(user?.userId ? `/api/users/${user.userId}` : null, (url) => fetch(url).then((r) => r.json()));
+  const { data: profile } = useSWR<UserPoints>(user?.userId ? `/api/users/${user.userId}` : null, fetcher);
 
   const effectiveName = name || profile?.name || "";
   const effectivePhone = phone || profile?.phone || "";
