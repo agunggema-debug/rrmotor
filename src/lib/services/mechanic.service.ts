@@ -4,7 +4,7 @@ const mechanicRepo = new MechanicRepository();
 
 export class MechanicService {
   async getMechanic() {
-    return mechanicRepo.findFirst({ orderBy: { id: "asc" } });
+    return mechanicRepo.findFirst({ id: "asc" });
   }
 
   async getMechanics() {

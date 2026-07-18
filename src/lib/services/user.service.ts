@@ -3,6 +3,8 @@ import { RewardRepository } from "@/lib/repositories/reward";
 import { RedemptionRepository } from "@/lib/repositories/redemption";
 import { HttpError } from "@/lib/http";
 import { num } from "@/lib/validate";
+import type { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 const userRepo = new UserRepository();
 const rewardRepo = new RewardRepository();
@@ -28,9 +30,9 @@ export class UserService {
       throw new HttpError(400, "Poin tidak cukup");
     }
 
-    const [updated] = await userRepo.$transaction([
-      userRepo.update(user.id, { points: { decrement: reward.cost } }),
-      redemptionRepo.create({ userId: user.id, rewardId: reward.id }),
+    const [updated] = await prisma.$transaction([
+      prisma.user.update({ where: { id: user.id }, data: { points: { decrement: reward.cost } } }),
+      prisma.redemption.create({ data: { user: { connect: { id: user.id } }, reward: { connect: { id: reward.id } } } }),
     ]);
 
     return updated;

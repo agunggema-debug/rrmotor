@@ -74,7 +74,7 @@ export class AuthService {
         username,
         passwordHash: await hashPassword(""),
         role: "CUSTOMER",
-        userId: user.id,
+        user: { connect: { id: user.id } },
       });
     }
 

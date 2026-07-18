@@ -1,21 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@prisma/client";
+import type { Account } from "@prisma/client";
 import { IAccountRepository } from "./interfaces";
 
 export class AccountRepository implements IAccountRepository {
-  async findUnique(where: any, include?: any): Promise<any | null> {
+  async findUnique(where: Prisma.AccountWhereUniqueInput, include?: Prisma.AccountInclude): Promise<Account | null> {
     return prisma.account.findUnique({ where, include });
   }
 
-  async create(data: any): Promise<any> {
+  async create(data: Prisma.AccountCreateInput): Promise<Account> {
     return prisma.account.create({ data });
   }
 
-  async upsert(where: any, data: any): Promise<any> {
+  async upsert(where: Prisma.AccountWhereUniqueInput, data: Prisma.AccountCreateInput): Promise<Account> {
     return prisma.account.upsert({ where, create: data, update: data });
   }
 
-  async createMany(data: any[]): Promise<{ count: number }> {
+  async createMany(data: Prisma.AccountCreateManyInput[]): Promise<Prisma.BatchPayload> {
     return prisma.account.createMany({ data });
   }
 }

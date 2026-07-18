@@ -4,6 +4,6 @@ const rewardRepo = new RewardRepository();
 
 export class RewardService {
   async getRewards() {
-    return rewardRepo.findMany({ orderBy: { cost: "asc" } });
+    return rewardRepo.findMany({ cost: "asc" });
   }
 }

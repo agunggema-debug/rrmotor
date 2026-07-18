@@ -4,6 +4,6 @@ const portfolioRepo = new PortfolioRepository();
 
 export class PortfolioService {
   async getPortfolios() {
-    return portfolioRepo.findMany({ orderBy: { id: "asc" } });
+    return portfolioRepo.findMany({ id: "asc" });
   }
 }

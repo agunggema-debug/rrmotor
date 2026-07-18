@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { randomUUID } from "crypto";
 import { requireRole, isUnauthorized } from "@/lib/auth";
 import { serverError } from "@/lib/http";
+import { getSupabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
 const MAX_BYTES = 5 * 1024 * 1024;
-// Hanya izinkan format gambar; ekstensi ditentukan dari MIME agar aman.
 const ALLOWED: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -17,7 +15,6 @@ const ALLOWED: Record<string, string> = {
   "image/avif": "avif",
 };
 
-// POST /api/upload — simpan foto dari kamera tablet mekanik ke public/uploads.
 export async function POST(req: Request) {
   const auth = await requireRole(["MECHANIC", "ADMIN"]);
   if (isUnauthorized(auth)) return auth.response;
@@ -42,14 +39,26 @@ export async function POST(req: Request) {
     }
 
     const buf = Buffer.from(await file.arrayBuffer());
-    const dir = path.join(process.cwd(), "public", "uploads");
-    await mkdir(dir, { recursive: true });
-
-    // Nama acak (UUID) agar tidak ada tabrakan / path traversal.
     const filename = `${randomUUID()}.${ext}`;
-    await writeFile(path.join(dir, filename), buf);
+    const path = `${filename}`;
 
-    return NextResponse.json({ url: `/uploads/${filename}` }, { status: 201 });
+    const sb = getSupabase();
+    const { error } = await sb.storage
+      .from("uploads")
+      .upload(path, buf, {
+        contentType: file.type,
+        upsert: false,
+      });
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    const {
+      data: { publicUrl },
+    } = sb.storage.from("uploads").getPublicUrl(path);
+
+    return NextResponse.json({ url: publicUrl }, { status: 201 });
   } catch (e) {
     return serverError(e);
   }

@@ -71,25 +71,22 @@ export class TransactionService {
       const invoiceNumber = genInvoice();
       try {
         transaction = await transactionRepo.create({
-          data: {
-            invoiceNumber,
-            customerName: str(data.customerName, { max: 100, field: "customerName" }),
-            customerPhone: str(data.customerPhone, { max: 30, field: "customerPhone" }),
-            total,
-            cash: cashAmount,
-            change,
-            paymentMethod: payment,
-            note: str(data.note, { max: 500, field: "note" }),
-            items: {
-              create: itemsWithPrice.map((item) => ({
+          invoiceNumber,
+          customerName: str(data.customerName, { max: 100, field: "customerName" }),
+          customerPhone: str(data.customerPhone, { max: 30, field: "customerPhone" }),
+          total,
+          cash: cashAmount,
+          change,
+          paymentMethod: payment,
+          note: str(data.note, { max: 500, field: "note" }),
+          items: {
+            createMany: {
+              data: itemsWithPrice.map((item) => ({
                 sparepartId: item.sparepartId,
                 quantity: item.quantity,
                 priceAtSale: 0,
               })),
             },
-          },
-          include: {
-            items: { include: { sparepart: { select: { id: true, name: true } } } },
           },
         });
         break;

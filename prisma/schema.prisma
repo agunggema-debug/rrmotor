@@ -1,4 +1,4 @@
-// RR MOTOR — Prisma schema (SQLite)
+// RR MOTOR — Prisma schema (PostgreSQL / Supabase)
 // Learn more: https://pris.ly/d/prisma-schema
 
 generator client {
@@ -6,8 +6,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // Pengguna (remaja / anak motor)

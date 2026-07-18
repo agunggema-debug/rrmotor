@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BookingRepository } from "@/lib/repositories/booking";
 import { FindingRepository } from "@/lib/repositories/finding";
 import { HttpError } from "@/lib/http";
 import { str, num, oneOf } from "@/lib/validate";
+import type { Prisma } from "@prisma/client";
 
 const bookingRepo = new BookingRepository();
 const findingRepo = new FindingRepository();
@@ -41,7 +41,7 @@ export class BookingService {
           appointmentDate,
           appointmentTime,
           basePrice,
-          userId: data.userId ?? null,
+          ...(data.userId ? { user: { connect: { id: data.userId } } } : {}),
         });
         break;
       } catch (e: unknown) {
@@ -55,9 +55,9 @@ export class BookingService {
 
   async getBookings() {
     return bookingRepo.findMany({
-      include: { findings: true, mechanic: true },
-      orderBy: { id: "asc" },
-    });
+      findings: true,
+      mechanic: true,
+    } satisfies Prisma.BookingInclude);
   }
 
   async getBooking(id: number) {
@@ -68,11 +68,11 @@ export class BookingService {
 
   async updateStatus(id: number, status: string, mechanicId?: number) {
     const validatedStatus = oneOf(status, STATUSES, "status");
-    const data: any = { status: validatedStatus };
+    const data: Record<string, unknown> = { status: validatedStatus };
     if (mechanicId != null) {
-      data.mechanicId = num(mechanicId, { min: 1, integer: true, field: "mechanicId" });
+      data.mechanic = { connect: { id: mechanicId } };
     }
-    return bookingRepo.update(id, data);
+    return bookingRepo.update(id, data as Prisma.BookingUpdateInput);
   }
 
   async createFinding(bookingId: number, data: {
@@ -90,7 +90,7 @@ export class BookingService {
     const photoUrl = data.photoUrl == null ? null : str(data.photoUrl, { max: 300, field: "photoUrl" });
 
     return findingRepo.create({
-      bookingId,
+      booking: { connect: { id: bookingId } },
       name,
       note,
       price,
@@ -106,8 +106,12 @@ export class BookingService {
     const finding = await findingRepo.findUnique(findingId);
     if (!finding) throw new HttpError(404, "Finding tidak ditemukan");
 
-    if (customerUserId != null && finding.booking.userId !== customerUserId) {
-      throw new HttpError(403, "Akses ditolak");
+    // Cast to access included booking relation
+    if (customerUserId != null) {
+      const bookingWithRelation = finding as unknown as { booking: { userId: number | null } };
+      if (bookingWithRelation.booking?.userId !== customerUserId) {
+        throw new HttpError(403, "Akses ditolak");
+      }
     }
 
     return findingRepo.update(findingId, { status: validatedStatus });
