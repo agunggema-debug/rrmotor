@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { BookingRepository } from "@/lib/repositories/booking";
+import { UserRepository } from "@/lib/repositories/user";
 import { requireRole, isUnauthorized } from "@/lib/auth";
 import { serverError } from "@/lib/http";
 
-export const dynamic = "force-dynamic";
+const bookingRepo = new BookingRepository();
+const userRepo = new UserRepository();
 
-function bookingTotal(b: {
-  basePrice: number;
-  findings: { status: string; price: number }[];
-}) {
-  return (
-    b.basePrice +
-    b.findings
-      .filter((f) => f.status === "approved")
-      .reduce((s, f) => s + f.price, 0)
-  );
-}
+export const dynamic = "force-dynamic";
 
 // GET /api/admin/overview — dashboard admin (ADMIN)
 export async function GET() {
@@ -24,25 +16,32 @@ export async function GET() {
 
   try {
     const [bookings, users] = await Promise.all([
-      prisma.booking.findMany({ include: { findings: true } }),
-      prisma.user.findMany({
-        select: { id: true, name: true, phone: true, points: true },
-      }),
+      bookingRepo.findMany(),
+      userRepo.findMany(),
     ]);
 
-    const totalBookings = bookings.length;
     const totalCustomers = users.length;
 
+    // Transform users to camelCase format for frontend
+    const customers = users.map((u) => ({
+      name: u.name,
+      phone: u.phone,
+      points: u.points,
+    })).sort((a, b) => b.points - a.points).slice(0, 6);
+    
+    const totalBookings = bookings.length;
+    
+    // Calculate revenue from completed bookings
     const revenue = bookings
       .filter((b) => b.status === "Selesai")
-      .reduce((s, b) => s + bookingTotal(b), 0);
+      .reduce((s, b) => s + (b.base_price + (b.findings?.filter(f => f.status === "approved").reduce((sf, f) => sf + f.price, 0) ?? 0)), 0);
 
     const byService = new Map<string, { revenue: number; count: number }>();
     for (const b of bookings) {
-      const cur = byService.get(b.serviceType) ?? { revenue: 0, count: 0 };
-      cur.revenue += bookingTotal(b);
+      const cur = byService.get(b.service_type) ?? { revenue: 0, count: 0 };
+      cur.revenue += b.base_price + (b.findings?.filter(f => f.status === "approved").reduce((sf, f) => sf + f.price, 0) ?? 0);
       cur.count += 1;
-      byService.set(b.serviceType, cur);
+      byService.set(b.service_type, cur);
     }
     const revenueByService = [...byService.entries()].map(
       ([service, v]) => ({ service, ...v })
@@ -65,18 +64,13 @@ export async function GET() {
       .reverse()
       .slice(0, 6)
       .map((b) => ({
-        queueNumber: b.queueNumber,
-        ownerName: b.ownerName,
+        queueNumber: b.queue_number,
+        ownerName: b.owner_name,
         motor: b.motor,
-        serviceType: b.serviceType,
+        serviceType: b.service_type,
         status: b.status,
-        total: bookingTotal(b),
+        total: b.base_price + (b.findings?.filter(f => f.status === "approved").reduce((sf, f) => sf + f.price, 0) ?? 0),
       }));
-
-    const customers = users
-      .map((u) => ({ name: u.name, phone: u.phone, points: u.points }))
-      .sort((a, b) => b.points - a.points)
-      .slice(0, 6);
 
     const done = bookings.filter((b) => b.status === "Selesai").length;
     const completionRate = totalBookings

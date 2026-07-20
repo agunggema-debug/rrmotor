@@ -2,12 +2,47 @@ import { BookingRepository } from "@/lib/repositories/booking";
 import { FindingRepository } from "@/lib/repositories/finding";
 import { HttpError } from "@/lib/http";
 import { str, num, oneOf } from "@/lib/validate";
-import type { Prisma } from "@prisma/client";
+import type { Booking } from "@/lib/db-types";
+import type { BookingWithRelations } from "@/lib/repositories/interfaces";
 
 const bookingRepo = new BookingRepository();
 const findingRepo = new FindingRepository();
 
 const STATUSES = ["Menunggu", "Dikerjakan", "Test Drive", "Selesai"] as const;
+
+// Transform snake_case to camelCase for frontend compatibility
+function toCamelCaseBooking(b: BookingWithRelations) {
+  return {
+    id: b.id,
+    queueNumber: b.queue_number,
+    ownerName: b.owner_name,
+    motor: b.motor,
+    plate: b.plate,
+    serviceType: b.service_type,
+    appointmentDate: b.appointment_date,
+    appointmentTime: b.appointment_time,
+    status: b.status,
+    basePrice: b.base_price,
+    userId: b.user_id,
+    mechanicId: b.mechanic_id,
+    findings: b.findings?.map((f) => ({
+      id: f.id,
+      bookingId: f.booking_id,
+      name: f.name,
+      note: f.note,
+      price: f.price,
+      photoUrl: f.photo_url,
+      status: f.status,
+    })) ?? [],
+    mechanic: b.mechanic
+      ? {
+          id: b.mechanic.id,
+          name: b.mechanic.name,
+          shift: b.mechanic.shift,
+        }
+      : null,
+  };
+}
 
 export class BookingService {
   async createBooking(data: {
@@ -28,51 +63,49 @@ export class BookingService {
     const appointmentTime = str(data.appointmentTime, { required: true, max: 10, field: "appointmentTime" });
     const basePrice = num(data.basePrice, { required: true, min: 0, field: "basePrice" });
 
-    let booking;
+    let booking: BookingWithRelations | undefined;
     for (let attempt = 0; attempt < 5; attempt++) {
       const queueNumber = "A-" + Math.floor(10 + Math.random() * 89);
       try {
         booking = await bookingRepo.create({
-          queueNumber,
-          ownerName,
+          queue_number: queueNumber,
+          owner_name: ownerName,
           motor,
           plate,
-          serviceType,
-          appointmentDate,
-          appointmentTime,
-          basePrice,
-          ...(data.userId ? { user: { connect: { id: data.userId } } } : {}),
+          service_type: serviceType,
+          appointment_date: appointmentDate,
+          appointment_time: appointmentTime,
+          base_price: basePrice,
+          ...(data.userId ? { user_id: data.userId } : {}),
         });
         break;
       } catch (e: unknown) {
         const code = (e as { code?: string })?.code;
-        if (code === "P2002" && attempt < 4) continue;
+        if (code === "23505" && attempt < 4) continue; // Supabase unique constraint violation code
         throw e;
       }
     }
-    return booking;
+    return toCamelCaseBooking(booking!);
   }
 
   async getBookings() {
-    return bookingRepo.findMany({
-      findings: true,
-      mechanic: true,
-    } satisfies Prisma.BookingInclude);
+    const bookings = await bookingRepo.findMany();
+    return bookings.map(toCamelCaseBooking);
   }
 
   async getBooking(id: number) {
     const booking = await bookingRepo.findUnique(id);
     if (!booking) throw new HttpError(404, "Booking tidak ditemukan");
-    return booking;
+    return toCamelCaseBooking(booking);
   }
 
   async updateStatus(id: number, status: string, mechanicId?: number) {
     const validatedStatus = oneOf(status, STATUSES, "status");
-    const data: Record<string, unknown> = { status: validatedStatus };
+    const data: Partial<Booking> = { status: validatedStatus };
     if (mechanicId != null) {
-      data.mechanic = { connect: { id: mechanicId } };
+      data.mechanic_id = mechanicId;
     }
-    return bookingRepo.update(id, data as Prisma.BookingUpdateInput);
+    return bookingRepo.update(id, data);
   }
 
   async createFinding(bookingId: number, data: {
@@ -81,8 +114,11 @@ export class BookingService {
     price: number;
     photoUrl?: string | null;
   }) {
-    const booking = await bookingRepo.findUnique(bookingId);
-    if (!booking) throw new HttpError(404, "Booking tidak ditemukan");
+    // Just check if booking exists - we don't need the relations for finding creation
+    const { getSupabase } = await import("@/lib/supabase");
+    const supabase = getSupabase();
+    const { data: bookingCheck } = await supabase.from("Booking").select("id").eq("id", bookingId).single();
+    if (!bookingCheck) throw new HttpError(404, "Booking tidak ditemukan");
 
     const name = str(data.name, { required: true, max: 100, field: "name" });
     const note = str(data.note, { max: 500, field: "note" });
@@ -90,11 +126,11 @@ export class BookingService {
     const photoUrl = data.photoUrl == null ? null : str(data.photoUrl, { max: 300, field: "photoUrl" });
 
     return findingRepo.create({
-      booking: { connect: { id: bookingId } },
+      booking_id: bookingId,
       name,
       note,
       price,
-      photoUrl,
+      photo_url: photoUrl,
       status: "pending",
     });
   }
@@ -103,13 +139,11 @@ export class BookingService {
     const ALLOWED = ["pending", "approved", "rejected"] as const;
     const validatedStatus = oneOf(status, ALLOWED, "status");
 
-    const finding = await findingRepo.findUnique(findingId);
+    const finding = await findingRepo.findUniqueWithBooking(findingId);
     if (!finding) throw new HttpError(404, "Finding tidak ditemukan");
 
-    // Cast to access included booking relation
     if (customerUserId != null) {
-      const bookingWithRelation = finding as unknown as { booking: { userId: number | null } };
-      if (bookingWithRelation.booking?.userId !== customerUserId) {
+      if (finding.booking?.user_id !== customerUserId) {
         throw new HttpError(403, "Akses ditolak");
       }
     }

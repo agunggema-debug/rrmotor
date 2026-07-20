@@ -4,7 +4,7 @@
 // Mitigasi OWASP: rate-limit per IP, id anonim divalidasi, cookie HttpOnly/SameSite.
 
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { VisitorRepository } from "@/lib/repositories/visitor";
 import { serverError } from "@/lib/http";
 import { rateLimit, getClientIP } from "@/lib/rate-limit";
 
@@ -18,14 +18,15 @@ const PURGE_INTERVAL_MS = 5 * 60 * 1000; // throttle pembersihan maksimal sekali
 const ID_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
 
 let lastPurge = 0;
+const visitorRepo = new VisitorRepository();
 
 async function purgeStale(): Promise<void> {
   const now = Date.now();
   if (now - lastPurge < PURGE_INTERVAL_MS) return;
   lastPurge = now;
-  await prisma.visitorSession.deleteMany({
-    where: { lastSeen: { lt: new Date(now - STALE_MAX_AGE_MS) } },
-  });
+  // Delete visitor sessions older than 1 day
+  const staleThreshold = new Date(now - STALE_MAX_AGE_MS).toISOString();
+  await visitorRepo.deleteMany({ last_seen: staleThreshold });
 }
 
 function isProd() {
@@ -42,10 +43,8 @@ function parseCookie(header: string | null, name: string): string | null {
 }
 
 async function countOnline(): Promise<number> {
-  const since = new Date(Date.now() - ONLINE_THRESHOLD_MS);
-  return prisma.visitorSession.count({
-    where: { lastSeen: { gt: since } },
-  });
+  const since = new Date(Date.now() - ONLINE_THRESHOLD_MS).toISOString();
+  return visitorRepo.count({ last_seen: since });
 }
 
 export async function GET() {
@@ -75,11 +74,8 @@ export async function POST(req: Request) {
       setCookie = true;
     }
 
-    await prisma.visitorSession.upsert({
-      where: { id: visitorId },
-      create: { id: visitorId, lastSeen: new Date() },
-      update: { lastSeen: new Date() },
-    });
+    // Upsert visitor session using Supabase
+    await visitorRepo.upsert(visitorId, { last_seen: new Date().toISOString() });
 
     void purgeStale().catch(() => {});
 

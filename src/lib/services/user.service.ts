@@ -3,8 +3,6 @@ import { RewardRepository } from "@/lib/repositories/reward";
 import { RedemptionRepository } from "@/lib/repositories/redemption";
 import { HttpError } from "@/lib/http";
 import { num } from "@/lib/validate";
-import type { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 
 const userRepo = new UserRepository();
 const rewardRepo = new RewardRepository();
@@ -12,7 +10,7 @@ const redemptionRepo = new RedemptionRepository();
 
 export class UserService {
   async getUser(id: number) {
-    const user = await userRepo.findUnique(id, { redemptions: { include: { reward: true } } });
+    const user = await userRepo.findUnique(id);
     if (!user) throw new HttpError(404, "User tidak ditemukan");
     return user;
   }
@@ -30,11 +28,14 @@ export class UserService {
       throw new HttpError(400, "Poin tidak cukup");
     }
 
-    const [updated] = await prisma.$transaction([
-      prisma.user.update({ where: { id: user.id }, data: { points: { decrement: reward.cost } } }),
-      prisma.redemption.create({ data: { user: { connect: { id: user.id } }, reward: { connect: { id: reward.id } } } }),
-    ]);
+    // Update user points and create redemption (Supabase style)
+    const updatedUser = await userRepo.update(user.id, { points: user.points - reward.cost });
+    
+    await redemptionRepo.create({
+      user_id: user.id,
+      reward_id: reward.id,
+    });
 
-    return updated;
+    return updatedUser;
   }
 }

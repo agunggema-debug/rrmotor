@@ -1,27 +1,41 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SparepartRepository } from "@/lib/repositories/sparepart";
 import { HttpError } from "@/lib/http";
 import { str, num, httpUrl, oneOf } from "@/lib/validate";
+import type { Sparepart } from "@/lib/db-types";
 
 const sparepartRepo = new SparepartRepository();
 const VALID_CATEGORIES = ["Mesin", "Body", "Kaki-kaki", "Kelistrikan", "Aksesoris", "Oli & Cairan"] as const;
 
+// Transform snake_case to camelCase for frontend compatibility
+function toCamelCaseSparepart(item: Sparepart) {
+  return {
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    price: item.price,
+    stock: item.stock,
+    description: item.description,
+    imageUrl: item.image_url,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+  };
+}
+
 export class SparepartService {
-  async getSpareparts(category?: string, search?: string) {
-    const where: any = {};
+  async getSpareparts(category?: string) {
+    const where: Partial<Sparepart> = {};
     if (category) {
       where.category = oneOf(category, VALID_CATEGORIES, "category");
     }
-    if (search) {
-      where.name = { contains: str(search) };
-    }
-    return sparepartRepo.findMany(where, { name: "asc" });
+    const items = await sparepartRepo.findMany(where, { name: "asc" });
+    // Transform to camelCase for frontend
+    return items.map(toCamelCaseSparepart);
   }
 
   async getSparepart(id: number) {
     const item = await sparepartRepo.findUnique(id);
     if (!item) throw new HttpError(404, "Sparepart tidak ditemukan");
-    return item;
+    return toCamelCaseSparepart(item);
   }
 
   async createSparepart(data: {
@@ -40,11 +54,11 @@ export class SparepartService {
     const rawImage = str(data.imageUrl, { max: 500, field: "imageUrl" });
     const imageUrl = rawImage ? httpUrl(rawImage, "imageUrl") : "";
 
-    return sparepartRepo.create({ name, category, price, stock, description, imageUrl });
+    return sparepartRepo.create({ name, category, price, stock, description, image_url: imageUrl });
   }
 
-  async updateSparepart(id: number, data: any) {
-    const updateData: any = {};
+  async updateSparepart(id: number, data: Partial<Sparepart> & { imageUrl?: string }) {
+    const updateData: Partial<Sparepart> = {};
     if (data.name !== undefined) updateData.name = str(data.name, { required: true, max: 100, field: "name" });
     if (data.category !== undefined) {
       updateData.category = oneOf(str(data.category, { required: true, max: 50, field: "category" }), VALID_CATEGORIES, "category");
@@ -54,13 +68,14 @@ export class SparepartService {
     if (data.description !== undefined) updateData.description = str(data.description, { max: 500, field: "description" });
     if (data.imageUrl !== undefined) {
       const raw = str(data.imageUrl, { max: 500, field: "imageUrl" });
-      updateData.imageUrl = raw ? httpUrl(raw, "imageUrl") : "";
+      updateData.image_url = raw ? httpUrl(raw, "imageUrl") : "";
     }
 
     try {
       return await sparepartRepo.update(id, updateData);
     } catch (e: unknown) {
-      if ((e as { code?: string })?.code === "P2025") {
+      // Supabase returns error with message containing "not found" or similar
+      if ((e as Error)?.message?.includes("not found")) {
         throw new HttpError(404, "Sparepart tidak ditemukan");
       }
       throw e;
@@ -71,7 +86,7 @@ export class SparepartService {
     try {
       await sparepartRepo.delete(id);
     } catch (e: unknown) {
-      if ((e as { code?: string })?.code === "P2025") {
+      if ((e as Error)?.message?.includes("not found")) {
         throw new HttpError(404, "Sparepart tidak ditemukan");
       }
       throw e;

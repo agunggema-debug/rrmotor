@@ -9,21 +9,24 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { AccountRepository } from "@/lib/repositories/account";
 import { UserRepository } from "@/lib/repositories/user";
 import { HttpError } from "@/lib/http";
+import { auditLog } from "@/lib/audit";
 
+const GOOGLE_ACCOUNT_PASSWORD_HASH = process.env.GOOGLE_ACCOUNT_PASSWORD_HASH ?? "";
 const accountRepo = new AccountRepository();
 const userRepo = new UserRepository();
 
 export class AuthService {
-  async login(username: string, password: string) {
-    const ip = getClientIP(new Request("http://localhost"));
+  async login(username: string, password: string, req?: Request) {
+    const ip = req ? getClientIP(req) : "unknown";
     const rateResult = await rateLimit(`login:${ip}`, 5, 15 * 60 * 1000);
     if (!rateResult.success) {
       const waitTime = Math.max(1, Math.ceil((rateResult.resetTime - Date.now()) / 60000));
       throw new HttpError(429, `Terlalu banyak percobaan login. Coba lagi dalam ${waitTime} menit.`);
     }
 
-    const account = await accountRepo.findUnique({ username });
-    if (!account || !(await verifyPassword(password, account.passwordHash))) {
+    const account = await accountRepo.findUnique({ username }, { user: true });
+    if (!account || !(await verifyPassword(password, account.password_hash))) {
+      auditLog("LOGIN_FAILED", { username, ip }, account?.user_id ?? null);
       throw new HttpError(401, "Username atau password salah");
     }
 
@@ -31,14 +34,16 @@ export class AuthService {
       id: account.id,
       username: account.username,
       role: account.role as "ADMIN" | "MECHANIC" | "KASIR" | "CUSTOMER",
-      userId: account.userId ?? undefined,
+      userId: account.user_id ?? undefined,
     });
+
+    auditLog("LOGIN_SUCCESS", { username, role: account.role, ip }, account.user_id);
 
     const res = NextResponse.json({
       id: account.id,
       username: account.username,
       role: account.role,
-      userId: account.userId,
+      userId: account.user_id,
     });
 
     res.cookies.set(SESSION_COOKIE, token, {
@@ -52,8 +57,8 @@ export class AuthService {
     return res;
   }
 
-  async googleLogin(email: string, name: string) {
-    const ip = getClientIP(new Request("http://localhost"));
+  async googleLogin(email: string, name: string, req?: Request) {
+    const ip = req ? getClientIP(req) : "unknown";
     const rateResult = await rateLimit(`google_auth:${ip}`, 10, 15 * 60 * 1000);
     if (!rateResult.success) {
       const waitTime = Math.max(1, Math.ceil((rateResult.resetTime - Date.now()) / 60000));
@@ -62,7 +67,7 @@ export class AuthService {
 
     const username = email.toLowerCase();
 
-    let account = await accountRepo.findUnique({ username });
+    let account = await accountRepo.findUnique({ username }, { user: true });
 
     if (!account) {
       const user = await userRepo.create({
@@ -72,9 +77,9 @@ export class AuthService {
       });
       account = await accountRepo.create({
         username,
-        passwordHash: await hashPassword(""),
+        password_hash: GOOGLE_ACCOUNT_PASSWORD_HASH,
         role: "CUSTOMER",
-        user: { connect: { id: user.id } },
+        user_id: user.id,
       });
     }
 
@@ -82,14 +87,16 @@ export class AuthService {
       id: account.id,
       username: account.username,
       role: account.role as "ADMIN" | "MECHANIC" | "KASIR" | "CUSTOMER",
-      userId: account.userId ?? undefined,
+      userId: account.user_id ?? undefined,
     });
+
+    auditLog("GOOGLE_LOGIN", { email, role: account.role, ip }, account.user_id);
 
     const res = NextResponse.json({
       id: account.id,
       username: account.username,
       role: account.role,
-      userId: account.userId,
+      userId: account.user_id,
     });
 
     res.cookies.set(SESSION_COOKIE, token, {

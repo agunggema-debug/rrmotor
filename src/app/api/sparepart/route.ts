@@ -12,9 +12,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const categoryParam = searchParams.get("category");
-    const search = searchParams.get("search");
 
-    const items = await sparepartService.getSpareparts(categoryParam || undefined, search || undefined);
+    const items = await sparepartService.getSpareparts(categoryParam || undefined);
     return NextResponse.json(items);
   } catch (e) {
     return serverError(e);

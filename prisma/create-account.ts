@@ -1,13 +1,13 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { hashPassword } from "../src/lib/password";
-import { PrismaClient } from "@prisma/client";
+import { getSupabase } from "../src/lib/supabase";
 
 const ROLES = ["ADMIN", "MECHANIC", "KASIR", "CUSTOMER"] as const;
 type Role = (typeof ROLES)[number];
 
 async function loadEnv() {
-  if (process.env.DATABASE_URL) return;
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY) return;
   const envPath = path.resolve(process.cwd(), ".env");
   try {
     const raw = await fs.readFile(envPath, "utf8");
@@ -27,11 +27,13 @@ async function loadEnv() {
 async function main() {
   await loadEnv();
 
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL tidak ditemukan (cek file .env)");
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error(
+      "NEXT_PUBLIC_SUPABASE_URL dan SUPABASE_SERVICE_ROLE_KEY harus di-set (cek file .env)"
+    );
   }
 
-  const prisma = new PrismaClient();
+  const supabase = getSupabase();
 
   const username = (process.argv[2] || "kasir").toLowerCase();
   const password = process.argv[3] || "kasir123";
@@ -40,17 +42,37 @@ async function main() {
 
   const passwordHash = await hashPassword(password);
 
-  const account = await prisma.account.upsert({
-    where: { username },
-    update: { passwordHash, role },
-    create: { username, passwordHash, role },
-  });
+  // Cek apakah akun sudah ada
+  const { data: existing } = await supabase
+    .from("Account")
+    .select("*")
+    .eq("username", username)
+    .single();
 
-  console.log(
-    `Akun siap: username=${account.username} role=${account.role} (id=${account.id})`
-  );
+  if (existing) {
+    const { data: updated, error } = await supabase
+      .from("Account")
+      .update({ password_hash: passwordHash, role })
+      .eq("username", username)
+      .select("*")
+      .single();
 
-  await prisma.$disconnect();
+    if (error) throw error;
+    console.log(
+      `Akun diupdate: username=${updated.username} role=${updated.role} (id=${updated.id})`
+    );
+  } else {
+    const { data: created, error } = await supabase
+      .from("Account")
+      .insert({ username, password_hash: passwordHash, role })
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    console.log(
+      `Akun dibuat: username=${created.username} role=${created.role} (id=${created.id})`
+    );
+  }
 }
 
 main().catch((e) => {

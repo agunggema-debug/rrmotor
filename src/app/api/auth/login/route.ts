@@ -20,7 +20,7 @@ export async function POST(req: Request) {
       );
     }
 
-    return authService.login(username, password);
+    return authService.login(username, password, req);
   } catch (e) {
     if (e instanceof HttpError) {
       return NextResponse.json({ error: e.message }, { status: e.status });

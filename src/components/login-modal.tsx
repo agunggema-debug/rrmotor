@@ -174,7 +174,7 @@ export default function LoginModal({ open, onClose, onLogin, onGoogleLogin }: Pr
           </div>
 
           <div className="mt-4 flex justify-center">
-            {open && (
+            <div className={open ? "" : "hidden"}>
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
@@ -182,7 +182,7 @@ export default function LoginModal({ open, onClose, onLogin, onGoogleLogin }: Pr
                 size="large"
                 width={320}
               />
-            )}
+            </div>
           </div>
         </div>
       </dialog>

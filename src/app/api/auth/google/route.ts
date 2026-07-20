@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     const email = payload.email.toLowerCase();
     const username = payload.name || email.split("@")[0];
 
-    const result = await authService.googleLogin(email, username);
+    const result = await authService.googleLogin(email, username, req);
 
     return result;
   } catch (err) {
