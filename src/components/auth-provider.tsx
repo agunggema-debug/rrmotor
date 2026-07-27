@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -31,7 +32,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { readonly children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,11 +80,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const googleLogin = useCallback(
-    async (idToken: string) => {
+    async (accessToken: string) => {
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ accessToken }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -107,9 +108,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.refresh();
   }, [router]);
 
+  const contextValue = useMemo(
+    () => ({ user, loading, isOpen, openLogin, closeLogin, login, googleLogin, logout }),
+    [user, loading, isOpen, openLogin, closeLogin, login, googleLogin, logout]
+  );
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, isOpen, openLogin, closeLogin, login, googleLogin, logout }}
+      value={contextValue}
     >
       {children}
       <LoginModal

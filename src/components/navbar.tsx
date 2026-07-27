@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -46,9 +47,13 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-line glass">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <span className="grid h-9 w-9 place-items-center rounded-lg neon-border">
-            <Bike className="h-5 w-5 neon-text" />
-          </span>
+          <Image
+            src="/images/rrmotor.png"
+            alt="RR Motor"
+            width={36}
+            height={36}
+            className="rounded-lg"
+          />
           <span className="text-lg">
             RR<span className="neon-text">MOTOR</span>
           </span>

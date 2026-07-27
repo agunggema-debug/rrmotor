@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { Bike, Send, MessageCircle, Share2, type LucideIcon } from "lucide-react";
+import { Send, MessageCircle, Share2, type LucideIcon } from "lucide-react";
 import OnlineVisitors from "@/components/online-visitors";
 
 const SOCIAL_ICONS: { id: string; Icon: LucideIcon }[] = [
@@ -14,9 +15,14 @@ export default function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2 font-semibold">
-            <span className="grid h-9 w-9 place-items-center rounded-lg neon-border">
-              <Bike className="h-5 w-5 neon-text" />
-            </span>RR<span className="neon-text">MOTOR</span>
+            <Image
+              src="/images/rrmotor.png"
+              alt="RR Motor"
+              width={36}
+              height={36}
+              className="rounded-lg"
+            />
+            RR<span className="neon-text">MOTOR</span>
           </div>
           <p className="mt-3 max-w-sm text-sm text-muted">Bengkel motor modern pertama untuk generasi muda. Servis transparan, booking anti-antre, dan komunitas yang seru. Zero-hassle.</p>
           <div className="mt-4 flex gap-3">

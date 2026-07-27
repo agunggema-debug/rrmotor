@@ -1,5 +1,5 @@
-import { promises as fs } from "fs";
-import path from "path";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { hashPassword } from "../src/lib/password";
 import { getSupabase } from "../src/lib/supabase";
 
@@ -12,7 +12,7 @@ async function loadEnv() {
   try {
     const raw = await fs.readFile(envPath, "utf8");
     for (const line of raw.split("\n")) {
-      const m = line.match(/^\s*([\w.-]+)\s*=\s*(.*)\s*$/);
+      const m = line.match(/^\s*([\w.-]+)\s*=\s*(.*)$/);
       if (!m) continue;
       const key = m[1];
       let val = m[2].trim();

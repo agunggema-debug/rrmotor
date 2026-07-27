@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
         value: "camera=(), microphone=(), geolocation=()",
       },
       {
+        key: "X-Powered-By",
+        value: "RR MOTOR",
+      },
+      {
         key: "Cross-Origin-Resource-Policy",
         value: "same-origin",
       },

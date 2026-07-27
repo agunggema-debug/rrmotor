@@ -24,12 +24,12 @@
 .DS_Store
 *.pem
 
-# prisma / database
+# prisma / database — sudah migrasi ke Supabase
 *.db
 *.db-journal
 *.sqlite
 *.sqlite3
-prisma/dev.db*
+/prisma/
 
 # uploaded files (runtime)
 /public/uploads/
@@ -76,3 +76,7 @@ Desktop.ini
 AGENTS.md
 CLAUDE.md
 prd_rr_motor.md
+
+# generated artifacts / logs
+eslint_result.txt
+task_progress.md

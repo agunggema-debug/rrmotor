@@ -1,6 +1,30 @@
 import { getSupabase } from "../src/lib/supabase";
 import { hashPassword } from "../src/lib/password";
 
+/**
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║  ⚠️  PERINGATAN KEAMANAN — BACA SEBELUM MENJALANKAN        ║
+ * ║                                                              ║
+ * ║  File ini berisi password default UNTUK DEVELOPMENT SAJA.    ║
+ * ║  JANGAN gunakan password ini di PRODUCTION!                  ║
+ * ║                                                              ║
+ * ║  Untuk production:                                           ║
+ * ║  1. Set env vars SEED_ADMIN_PASSWORD, SEED_MECHANIC_PASSWORD,║
+ * ║     SEED_KASIR_PASSWORD, SEED_CUSTOMER_PASSWORD               ║
+ * ║  2. Atau jalankan prisma/create-account.ts setelah deploy    ║
+ * ║     untuk membuat akun dengan password kuat.                 ║
+ * ║  3. Hapus / jangan jalankan seed.ts di production.           ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ */
+
+// Password dari environment variable (fallback ke dev-only default)
+const DEV_PASSWORDS = {
+  admin: process.env.SEED_ADMIN_PASSWORD || "admin123",
+  mekanik: process.env.SEED_MECHANIC_PASSWORD || "mekanik123",
+  kasir: process.env.SEED_KASIR_PASSWORD || "kasir123",
+  customer: process.env.SEED_CUSTOMER_PASSWORD || "bagas123",
+};
+
 async function main() {
   const supabase = getSupabase();
 
@@ -34,10 +58,10 @@ async function main() {
 
   // 2. ACCOUNTS
   await supabase.from("Account").insert([
-    { id: 1, username: "admin", password_hash: await hash("admin123"), role: "ADMIN", user_id: null },
-    { id: 2, username: "mekanik", password_hash: await hash("mekanik123"), role: "MECHANIC", user_id: null },
-    { id: 3, username: "kasir", password_hash: await hash("kasir123"), role: "KASIR", user_id: null },
-    { id: 4, username: "bagas", password_hash: await hash("bagas123"), role: "CUSTOMER", user_id: bagas.id },
+    { id: 1, username: "admin", password_hash: await hash(DEV_PASSWORDS.admin), role: "ADMIN", user_id: null },
+    { id: 2, username: "mekanik", password_hash: await hash(DEV_PASSWORDS.mekanik), role: "MECHANIC", user_id: null },
+    { id: 3, username: "kasir", password_hash: await hash(DEV_PASSWORDS.kasir), role: "KASIR", user_id: null },
+    { id: 4, username: "bagas", password_hash: await hash(DEV_PASSWORDS.customer), role: "CUSTOMER", user_id: bagas.id },
   ]);
 
   // 3. MECHANICS

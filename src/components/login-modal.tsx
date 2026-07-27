@@ -19,6 +19,7 @@ export default function LoginModal({ open, onClose, onLogin, onGoogleLogin }: Pr
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const googleLogin = useGoogleLogin({
+    flow: "implicit",
     onSuccess: (tokenResponse) => handleGoogleSuccess({ credential: tokenResponse.access_token }),
     onError: () => handleGoogleError(),
   });

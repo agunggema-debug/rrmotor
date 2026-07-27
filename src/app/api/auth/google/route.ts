@@ -1,31 +1,44 @@
 import { NextResponse } from "next/server";
-import { OAuth2Client } from "google-auth-library";
 import { AuthService } from "@/lib/services/auth.service";
 
 const authService = new AuthService();
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Google OAuth login.
+ * Frontend sends access_token from @react-oauth/google useGoogleLogin.
+ * Backend verifies the token by calling Google's userinfo endpoint.
+ */
 export async function POST(req: Request) {
   try {
-    const { idToken } = (await req.json()) as {
-      idToken?: string;
+    const { accessToken } = (await req.json()) as {
+      accessToken?: string;
     };
 
-    if (!idToken) {
+    if (!accessToken) {
       return NextResponse.json(
-        { error: "idToken wajib" },
+        { error: "accessToken wajib" },
         { status: 400 }
       );
     }
 
-    // Verify Google token
-    const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-    const payload = ticket.getPayload();
+    // Verify access token with Google's userinfo API
+    const userInfoRes = await fetch(
+      "https://www.googleapis.com/oauth2/v3/userinfo",
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }
+    );
+
+    if (!userInfoRes.ok) {
+      return NextResponse.json(
+        { error: "Token Google tidak valid" },
+        { status: 401 }
+      );
+    }
+
+    const payload = await userInfoRes.json();
 
     if (!payload?.email) {
       return NextResponse.json(
