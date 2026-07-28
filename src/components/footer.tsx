@@ -32,6 +32,11 @@ export default function Footer() {
           <h4 className="text-sm font-semibold text-light">Fitur</h4>
           <ul className="mt-3 space-y-2 text-sm text-muted">
             <li>
+              <Link href="/services" className="hover:text-neon">
+                Layanan
+              </Link>
+            </li>
+            <li>
               <Link href="/booking" className="hover:text-neon">
                 Smart Booking
               </Link>

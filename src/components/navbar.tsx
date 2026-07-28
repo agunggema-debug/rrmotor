@@ -12,6 +12,7 @@ type LinkItem = { href: string; label: string; roles?: Role[] };
 
 const ALL_LINKS: LinkItem[] = [
   { href: "/", label: "Beranda" },
+  { href: "/services", label: "Layanan" },
   { href: "/booking", label: "Booking" },
   { href: "/sparepart", label: "Sparepart" },
   { href: "/progress", label: "Live Progress" },
