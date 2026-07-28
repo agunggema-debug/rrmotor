@@ -19,7 +19,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RR MOTOR — Bengkel Digital Generasi Muda",
   description: "Platform layanan & komunitas bengkel motor modern: smart booking, live progress transparan, modif corner, dan RR Points.",
-  icons: [{ rel: "icon", url: "/images/rrmotor.ico" }],
 };
 
 export default function RootLayout({
