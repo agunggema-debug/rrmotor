@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, Bike, User, LogOut, LogIn } from "lucide-react";
+import { Menu, X, User, LogOut, LogIn } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 
 type Role = "ADMIN" | "MECHANIC" | "KASIR" | "CUSTOMER";
@@ -34,26 +34,15 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const { user, openLogin, logout } = useAuth();
 
-  const links = ALL_LINKS.filter(
-    (l) =>
-      !l.roles ||
-      (user && l.roles.includes(user.role))
-  );
+  const links = ALL_LINKS.filter((l) => !l.roles || (user && l.roles.includes(user.role)));
 
-  const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname.startsWith(href);
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
     <header className="sticky top-0 z-50 border-b border-line glass">
       <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-          <Image
-            src="/images/rrmotor.png"
-            alt="RR Motor"
-            width={36}
-            height={36}
-            className="rounded-lg"
-          />
+          <Image src="/images/logo.png" alt="RR Motor" width={150} height={50} className="rounded-lg w-auto h-14 sm:h-16 md:h-20 lg:h-24" sizes="(max-width: 640px) 56px, (max-width: 768px) 64px, (max-width: 1024px) 80px, 96px" />
           <span className="text-lg">
             RR<span className="neon-text">MOTOR</span>
           </span>
@@ -62,14 +51,7 @@ export default function Navbar() {
         <ul className="hidden items-center gap-1 md:flex">
           {links.map((l) => (
             <li key={l.href}>
-              <Link
-                href={l.href}
-                className={`rounded-lg px-3 py-2 text-sm transition-colors ${
-                  isActive(l.href)
-                    ? "neon-text font-medium"
-                    : "text-muted hover:text-light"
-                }`}
-              >
+              <Link href={l.href} className={`rounded-lg px-3 py-2 text-sm transition-colors ${isActive(l.href) ? "neon-text font-medium" : "text-muted hover:text-light"}`}>
                 {l.label}
               </Link>
             </li>
@@ -82,48 +64,29 @@ export default function Navbar() {
               <span className="flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm">
                 <User className="h-4 w-4 neon-text" />
                 <span>{user.username}</span>
-                <span className="rounded bg-neon/10 px-1.5 py-0.5 text-[10px] neon-text">
-                  {ROLE_LABEL[user.role]}
-                </span>
+                <span className="rounded bg-neon/10 px-1.5 py-0.5 text-[10px] neon-text">{ROLE_LABEL[user.role]}</span>
               </span>
-              <button
-                onClick={logout}
-                className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-muted hover:border-magenta hover:text-magenta"
-              >
+              <button onClick={logout} className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-muted hover:border-magenta hover:text-magenta">
                 <LogOut className="h-4 w-4" /> Logout
               </button>
             </>
           ) : (
-            <button
-              onClick={openLogin}
-              className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-light hover:border-neon hover:text-neon"
-            >
+            <button onClick={openLogin} className="flex items-center gap-1 rounded-lg border border-line px-3 py-2 text-sm text-light hover:border-neon hover:text-neon">
               <LogIn className="h-4 w-4 neon-text" /> Login
             </button>
           )}
           {user ? (
-            <Link
-              href="/booking"
-              className="rounded-lg px-4 py-2 text-sm font-semibold glow-btn hover:glow-btn-hover"
-            >
+            <Link href="/booking" className="rounded-lg px-4 py-2 text-sm font-semibold glow-btn hover:glow-btn-hover">
               Booking Sekarang
             </Link>
           ) : (
-            <button
-              onClick={openLogin}
-              className="rounded-lg px-4 py-2 text-sm font-semibold glow-btn hover:glow-btn-hover"
-            >
+            <button onClick={openLogin} className="rounded-lg px-4 py-2 text-sm font-semibold glow-btn hover:glow-btn-hover">
               Booking Anti-Antre
             </button>
           )}
         </div>
 
-        <button
-          type="button"
-          aria-label="Toggle menu"
-          className="grid h-10 w-10 place-items-center rounded-lg border border-line text-light md:hidden"
-          onClick={() => setOpen((v) => !v)}
-        >
+        <button type="button" aria-label="Toggle menu" className="grid h-10 w-10 place-items-center rounded-lg border border-line text-light md:hidden" onClick={() => setOpen((v) => !v)}>
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </nav>
@@ -133,13 +96,7 @@ export default function Navbar() {
           <ul className="mx-auto flex max-w-6xl flex-col px-4 py-2">
             {links.map((l) => (
               <li key={l.href}>
-                <Link
-                  href={l.href}
-                  onClick={() => setOpen(false)}
-                  className={`block rounded-lg px-3 py-3 text-sm ${
-                    isActive(l.href) ? "neon-text font-medium" : "text-muted"
-                  }`}
-                >
+                <Link href={l.href} onClick={() => setOpen(false)} className={`block rounded-lg px-3 py-3 text-sm ${isActive(l.href) ? "neon-text font-medium" : "text-muted"}`}>
                   {l.label}
                 </Link>
               </li>
@@ -169,11 +126,7 @@ export default function Navbar() {
             </li>
             <li className="pb-2">
               {user ? (
-                <Link
-                  href="/booking"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-3 py-3 text-center text-sm font-semibold glow-btn"
-                >
+                <Link href="/booking" onClick={() => setOpen(false)} className="block rounded-lg px-3 py-3 text-center text-sm font-semibold glow-btn">
                   Booking Sekarang
                 </Link>
               ) : (

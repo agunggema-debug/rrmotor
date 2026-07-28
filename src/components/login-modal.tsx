@@ -18,11 +18,23 @@ export default function LoginModal({ open, onClose, onLogin, onGoogleLogin }: Pr
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const googleLogin = useGoogleLogin({
+  const googleLoginHook = useGoogleLogin({
     flow: "implicit",
     onSuccess: (tokenResponse) => handleGoogleSuccess({ credential: tokenResponse.access_token }),
     onError: () => handleGoogleError(),
   });
+
+  function handleGoogleClick() {
+    try {
+      googleLoginHook();
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "SecurityError") {
+        setError("Login Google tidak tersedia di mode privasi / saat pihak ketiga diblokir. Gunakan login manual.");
+      } else {
+        setError("Terjadi kesalahan saat membuka login Google.");
+      }
+    }
+  }
 
   async function submit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -43,6 +55,7 @@ export default function LoginModal({ open, onClose, onLogin, onGoogleLogin }: Pr
   function handleGoogleError() {
     setError("Login Google dibatalkan atau gagal");
   }
+
 
   useEffect(() => {
     if (!open) return;
@@ -182,7 +195,7 @@ export default function LoginModal({ open, onClose, onLogin, onGoogleLogin }: Pr
           <div className="mt-4 flex justify-center">
             <button
               type="button"
-              onClick={() => googleLogin()}
+              onClick={() => handleGoogleClick()}
               className="flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-medium text-muted transition-all hover:border-neon hover:text-light hover:shadow-[0_0_12px_rgba(45,255,136,0.2)]"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">

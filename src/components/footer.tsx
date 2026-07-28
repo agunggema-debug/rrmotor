@@ -15,13 +15,7 @@ export default function Footer() {
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <div className="flex items-center gap-2 font-semibold">
-            <Image
-              src="/images/rrmotor.png"
-              alt="RR Motor"
-              width={36}
-              height={36}
-              className="rounded-lg"
-            />
+            <Image src="/images/logo.png" alt="RR Motor" width={90} height={30} className="rounded-lg w-auto h-8 sm:h-9 md:h-10" sizes="(max-width: 640px) 32px, (max-width: 768px) 36px, 40px" />
             RR<span className="neon-text">MOTOR</span>
           </div>
           <p className="mt-3 max-w-sm text-sm text-muted">Bengkel motor modern pertama untuk generasi muda. Servis transparan, booking anti-antre, dan komunitas yang seru. Zero-hassle.</p>
@@ -72,7 +66,9 @@ export default function Footer() {
       <div className="border-t border-line py-5 text-center text-xs text-muted">
         <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
           <span>© {new Date().getFullYear()} RR MOTOR Digital Ecosystem. All rights reserved.</span>
-          <span className="hidden sm:inline" aria-hidden>·</span>
+          <span className="hidden sm:inline" aria-hidden>
+            ·
+          </span>
           <OnlineVisitors />
         </div>
       </div>
